@@ -51,6 +51,7 @@ export default function App() {
           station={currentStation}
           unit={unit}
           onClose={() => setSelectedStation(null)}
+          lastUpdate={lastUpdate}
         />
       )}
 

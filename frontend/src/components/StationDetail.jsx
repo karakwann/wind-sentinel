@@ -5,7 +5,7 @@ import { convertSpeed, convertSpeedValue, unitSuffix, formatDirection, getWindCo
 import { Wind, Thermometer, X } from 'lucide-react'
 
 
-export default function StationDetail({ station, unit, onClose }) {
+export default function StationDetail({ station, unit, onClose, lastUpdate }) {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -164,13 +164,21 @@ export default function StationDetail({ station, unit, onClose }) {
       </div>
 
       {/* Fraîcheur */}
-      <div className={`mt-3 text-xs px-2 py-1 rounded text-center ${station.is_fresh ? 'bg-emerald-900/50 text-emerald-400' : 'bg-amber-900/50 text-amber-400'}`}>
-        {station.is_fresh ? '● Données fraîches' : '⚠ Données anciennes'}
-        {station.observation_time && (
-          <span className="ml-1 opacity-75">
-            — {new Date(station.observation_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} (
-            {Math.round((Date.now() - new Date(station.observation_time)) / 60000)} min)
-          </span>
+      <div className="mt-3 text-xs px-2 py-1 rounded bg-gray-800 text-gray-400 space-y-0.5">
+        <div className={station.is_fresh ? 'text-emerald-400' : 'text-amber-400'}>
+          {station.is_fresh ? '● Observation' : '⚠ Observation ancienne'}
+          {station.observation_time && (
+            <span className="ml-1 opacity-75">
+              {new Date(station.observation_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              {' '}({Math.round((Date.now() - new Date(station.observation_time)) / 60000)} min)
+            </span>
+          )}
+        </div>
+        {lastUpdate && (
+          <div className="text-blue-400">
+            ↻ App actualisée à {lastUpdate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            {' '}({Math.round((Date.now() - lastUpdate) / 60000)} min)
+          </div>
         )}
       </div>
     </div>
