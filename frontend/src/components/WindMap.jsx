@@ -10,7 +10,7 @@ const FRANCE_CENTER = [46.5, 2.5]
 const FRANCE_ZOOM = 6
 
 function makeArrowIcon(direction, color, size = 28) {
-  const rot = direction != null ? direction : 0
+  const rot = direction != null ? (direction + 180) % 360 : 0
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 28 28">
     <g transform="rotate(${rot}, 14, 14)">
       <polygon points="14,3 19,22 14,18 9,22" fill="${color}" stroke="rgba(0,0,0,0.4)" stroke-width="1"/>

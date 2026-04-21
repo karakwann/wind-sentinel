@@ -177,7 +177,7 @@ async def fetch_stations() -> list[dict[str, Any]]:
             "wind_direction": dd,
             "wind_gust_ms": fx,
             "temperature_c": round(t, 1) if t is not None else None,
-            "observation_time": now.replace(minute=0, second=0, microsecond=0).isoformat(),
+            "observation_time": (current.get("time") or now.strftime("%Y-%m-%dT%H:%M")) + ":00Z",
             "is_fresh": True,
         })
 

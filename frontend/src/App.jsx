@@ -14,6 +14,10 @@ export default function App() {
 
   useAutoRefresh(refetch, 300_000)
 
+  const currentStation = selectedStation
+    ? (stations.find(s => s.id === selectedStation.id) ?? selectedStation)
+    : null
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#1a1a2e' }}>
       {error && (
@@ -42,9 +46,9 @@ export default function App() {
 
       <Legend unit={unit} />
 
-      {selectedStation && (
+      {currentStation && (
         <StationDetail
-          station={selectedStation}
+          station={currentStation}
           unit={unit}
           onClose={() => setSelectedStation(null)}
         />

@@ -4,7 +4,7 @@ import { convertSpeedValue, unitSuffix, msToBeaufort } from '../utils/windUnits'
 const LEGEND_BANDS = [
   { label: 'Calme',           color: '#E8F4F8', minMs: 0,  maxMs: 1  },
   { label: 'Brise légère',    color: '#74C6E6', minMs: 1,  maxMs: 5  },
-  { label: 'Brise modérée',   color: '#4BA3D4', minMs: 5,  maxMs: 11 },
+  { label: 'Brise modérée',   color: '#4CAF50', minMs: 5,  maxMs: 11 },
   { label: 'Vent frais',      color: '#F5A623', minMs: 11, maxMs: 20 },
   { label: 'Coup de vent',    color: '#E85D26', minMs: 20, maxMs: 29 },
   { label: 'Tempête',         color: '#C0392B', minMs: 29, maxMs: 39 },

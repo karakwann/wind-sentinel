@@ -8,7 +8,7 @@ const BEAUFORT_SCALE = [
 const WIND_COLOR_SCALE = [
   [0, 1, '#E8F4F8'],
   [1, 5, '#74C6E6'],
-  [5, 11, '#4BA3D4'],
+  [5, 11, '#4CAF50'],
   [11, 20, '#F5A623'],
   [20, 29, '#E85D26'],
   [29, 39, '#C0392B'],

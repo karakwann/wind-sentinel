@@ -120,8 +120,9 @@ async def fetch_history(station_id: str, lat: float, lon: float) -> dict[str, An
             "latitude": lat,
             "longitude": lon,
             "hourly": "wind_speed_10m,wind_direction_10m,wind_gusts_10m",
-            "past_days": 1,
-            "forecast_days": 0,
+            "current": "wind_speed_10m,wind_direction_10m,wind_gusts_10m",
+            "past_hours": 24,
+            "forecast_hours": 0,
             "models": OPEN_METEO_MODEL,
             "wind_speed_unit": "ms",
         }
@@ -135,20 +136,33 @@ async def fetch_history(station_id: str, lat: float, lon: float) -> dict[str, An
     directions = hourly.get("wind_direction_10m", [])
     gusts = hourly.get("wind_gusts_10m", [])
 
-    # Garder uniquement les 24 dernières heures passées
-    history = []
-    for i, t in enumerate(times):
-        dt = datetime.fromisoformat(t).replace(tzinfo=timezone.utc)
-        if dt > now:
-            break
-        history.append({
+    entries = [
+        {
             "time": t + ":00Z",
             "wind_speed_ms": speeds[i] if i < len(speeds) else None,
             "wind_direction": directions[i] if i < len(directions) else None,
             "wind_gust_ms": gusts[i] if i < len(gusts) else None,
-        })
+        }
+        for i, t in enumerate(times)
+    ]
 
-    return {"station_id": station_id, "history": history[-24:]}
+    history = entries[-24:]
+
+    # Ajouter l'observation courante comme dernier point si plus récente que le dernier point horaire
+    current = data.get("current", {})
+    current_time_str = current.get("time")
+    if current_time_str and current.get("wind_speed_10m") is not None:
+        current_dt = datetime.fromisoformat(current_time_str).replace(tzinfo=timezone.utc)
+        last_dt = datetime.fromisoformat(history[-1]["time"].rstrip("Z")).replace(tzinfo=timezone.utc) if history else None
+        if last_dt is None or current_dt > last_dt:
+            history.append({
+                "time": current_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "wind_speed_ms": current.get("wind_speed_10m"),
+                "wind_direction": current.get("wind_direction_10m"),
+                "wind_gust_ms": current.get("wind_gusts_10m"),
+            })
+
+    return {"station_id": station_id, "history": history}
 
 
 async def fetch_forecast(station_id: str, lat: float, lon: float, hours: int = 48) -> dict[str, Any]:

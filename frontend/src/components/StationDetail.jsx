@@ -4,50 +4,85 @@ import axios from 'axios'
 import { convertSpeed, convertSpeedValue, unitSuffix, formatDirection, getWindColor } from '../utils/windUnits'
 import { Wind, Thermometer, X } from 'lucide-react'
 
-function WindArrow({ direction, speedMs, size = 12 }) {
-  const color = getWindColor(speedMs ?? 0)
-  const rot = direction ?? 0
-  return (
-    <svg width={size} height={size} viewBox="0 0 12 12" style={{ display: 'block' }}>
-      <g transform={`rotate(${rot}, 6, 6)`}>
-        {/* Corps de la flèche */}
-        <line x1="6" y1="10" x2="6" y2="3" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-        {/* Tête de flèche */}
-        <polygon points="6,1 8.5,5 6,4 3.5,5" fill={color} />
-      </g>
-    </svg>
-  )
-}
 
 export default function StationDetail({ station, unit, onClose }) {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
 
+  const fetchHistory = (id, lat, lon) =>
+    axios.get(`/api/history?station_id=${id}&lat=${lat}&lon=${lon}`)
+      .then(res => setHistory(res.data.history || []))
+      .catch(() => setHistory([]))
+
   useEffect(() => {
     if (!station) return
     setLoading(true)
-    axios.get(`/api/history?station_id=${station.id}&lat=${station.lat}&lon=${station.lon}`)
-      .then(res => setHistory(res.data.history || []))
-      .catch(() => setHistory([]))
-      .finally(() => setLoading(false))
+    fetchHistory(station.id, station.lat, station.lon).finally(() => setLoading(false))
+  }, [station?.id])
+
+  useEffect(() => {
+    if (!station) return
+    const id = setInterval(
+      () => fetchHistory(station.id, station.lat, station.lon),
+      300_000
+    )
+    return () => clearInterval(id)
   }, [station?.id])
 
   if (!station) return null
 
   const suffix = unitSuffix(unit)
 
-  const chartData = history.map(h => ({
-    time: h.time ? new Date(h.time).getHours() + 'h' : '',
-    vitesse: h.wind_speed_ms != null ? convertSpeedValue(h.wind_speed_ms, unit) : null,
-    rafale: h.wind_gust_ms != null ? convertSpeedValue(h.wind_gust_ms, unit) : null,
-    direction: h.wind_direction,
-    speedMs: h.wind_speed_ms,
-  }))
+  const todayStr = new Date().toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })
+  const chartData = history.map(h => {
+    const dt = h.time ? new Date(h.time) : null
+    const dayStr = dt ? dt.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }) : null
+    const isToday = dayStr === todayStr
+    const hhmm = dt ? dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' }) : ''
+    return {
+      label: dt ? (isToday ? hhmm : `hier ${hhmm}`) : '',
+      isToday,
+      vitesse: h.wind_speed_ms != null ? convertSpeedValue(h.wind_speed_ms, unit) : null,
+      rafale: h.wind_gust_ms != null ? convertSpeedValue(h.wind_gust_ms, unit) : null,
+      direction: h.wind_direction,
+      speedMs: h.wind_speed_ms,
+      gustMs: h.wind_gust_ms,
+    }
+  })
 
-  // Afficher une étiquette toutes les 6h, alignée sur les heures rondes
-  const showLabel = (item) => {
-    const h = item.time ? parseInt(item.time) : -1
-    return h % 6 === 0
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null
+    return (
+      <div style={{ background: '#1f2937', borderRadius: 8, fontSize: 11, padding: '6px 10px' }}>
+        <p style={{ color: '#9ca3af', marginBottom: 4 }}>{label}</p>
+        {payload.map((p, i) => {
+          const ms = p.name === 'Vent' ? p.payload.speedMs : p.payload.gustMs
+          return p.value != null ? (
+            <p key={i} style={{ color: '#ffffff', margin: '2px 0' }}>
+              {p.name} : <span style={{ color: getWindColor(ms ?? 0) }}>{p.value} {suffix}</span>
+            </p>
+          ) : null
+        })}
+      </div>
+    )
+  }
+
+  const CustomXTick = ({ x, y, payload, index }) => {
+    const d = chartData[index]
+    if (!d) return null
+    const color = getWindColor(d.speedMs ?? 0)
+    const rot = d.direction != null ? (d.direction + 180) % 360 : 0
+    return (
+      <g>
+        <g transform={`translate(${x - 6},${y + 2})`}>
+          <g transform={`rotate(${rot}, 6, 6)`}>
+            <line x1="6" y1="10" x2="6" y2="3" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+            <polygon points="6,1 8.5,5 6,4 3.5,5" fill={color} />
+          </g>
+        </g>
+        <text x={x} y={y + 22} textAnchor="middle" fill="#6b7280" fontSize={7}>{payload.value}</text>
+      </g>
+    )
   }
 
   return (
@@ -70,7 +105,7 @@ export default function StationDetail({ station, unit, onClose }) {
           <div className="flex items-center gap-1 text-gray-400 text-xs mb-1">
             <Wind size={12} /> Vent moyen
           </div>
-          <div className="text-xl font-bold" style={{ color: station.wind_speed_ms > 11 ? '#F5A623' : '#74C6E6' }}>
+          <div className="text-xl font-bold" style={{ color: getWindColor(station.wind_speed_ms ?? 0) }}>
             {convertSpeed(station.wind_speed_ms, unit)}
           </div>
           <div className="text-gray-400 text-xs">
@@ -80,7 +115,7 @@ export default function StationDetail({ station, unit, onClose }) {
 
         <div className="bg-gray-800 rounded-lg p-3">
           <div className="text-gray-400 text-xs mb-1">Rafale max</div>
-          <div className="text-xl font-bold text-orange-400">
+          <div className="text-xl font-bold" style={{ color: getWindColor(station.wind_gust_ms ?? 0) }}>
             {station.wind_gust_ms != null ? convertSpeed(station.wind_gust_ms, unit) : '—'}
           </div>
           {station.temperature_c != null && (
@@ -102,34 +137,26 @@ export default function StationDetail({ station, unit, onClose }) {
             {/* Graphique vitesse */}
             <ResponsiveContainer width="100%" height={80}>
               <LineChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
-                <XAxis dataKey="time" tick={{ fontSize: 8, fill: '#6b7280' }} interval={5} />
+                <defs>
+                  <linearGradient id="gradVitesse" x1="0" y1="0" x2="1" y2="0">
+                    {chartData.map((d, i) => (
+                      <stop key={i} offset={`${(i / Math.max(chartData.length - 1, 1)) * 100}%`} stopColor={getWindColor(d.speedMs ?? 0)} />
+                    ))}
+                  </linearGradient>
+                  <linearGradient id="gradRafale" x1="0" y1="0" x2="1" y2="0">
+                    {chartData.map((d, i) => (
+                      <stop key={i} offset={`${(i / Math.max(chartData.length - 1, 1)) * 100}%`} stopColor={getWindColor(d.gustMs ?? 0)} />
+                    ))}
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="label" tick={<CustomXTick />} interval={2} height={30} />
                 <YAxis tick={{ fontSize: 8, fill: '#6b7280' }} />
-                <Tooltip
-                  contentStyle={{ background: '#1f2937', border: 'none', borderRadius: 8, fontSize: 11 }}
-                  labelStyle={{ color: '#9ca3af' }}
-                  formatter={(value, name) => value != null ? [`${value} ${suffix}`, name] : ['-', name]}
-                />
-                <Line type="monotone" dataKey="vitesse" stroke="#74C6E6" strokeWidth={2} dot={false} name="Vent" connectNulls />
-                <Line type="monotone" dataKey="rafale" stroke="#F5A623" strokeWidth={1.5} dot={false} name="Rafale" strokeDasharray="3 3" connectNulls />
+                <Tooltip content={<CustomTooltip />} />
+                <Line type="monotone" dataKey="vitesse" stroke="url(#gradVitesse)" strokeWidth={2} dot={false} name="Vent" connectNulls />
+                <Line type="monotone" dataKey="rafale" stroke="url(#gradRafale)" strokeWidth={1.5} dot={false} name="Rafale" strokeDasharray="3 3" connectNulls />
               </LineChart>
             </ResponsiveContainer>
 
-            {/* Flèches de direction */}
-            <div className="mt-2">
-              <p className="text-gray-500 text-xs mb-1">Direction</p>
-              <div className="flex justify-between items-end">
-                {chartData.map((d, i) => (
-                  <div key={i} className="flex flex-col items-center gap-0.5">
-                    <WindArrow direction={d.direction} speedMs={d.speedMs} size={12} />
-                    {showLabel(d) ? (
-                      <span style={{ fontSize: 7, color: '#6b7280', lineHeight: 1 }}>{d.time}</span>
-                    ) : (
-                      <span style={{ fontSize: 7, lineHeight: 1 }}>&nbsp;</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
           </>
         ) : (
           <div className="text-gray-500 text-xs text-center py-4">Historique indisponible</div>
