@@ -39,6 +39,29 @@ Fall back to Grep/Glob/Read **only** when the graph does not cover what you need
 
 ---
 
+# Mémoire de session
+
+## Fichiers à lire OBLIGATOIREMENT au démarrage de chaque session
+
+Ces 3 fichiers contiennent le contexte, les décisions et les conventions du projet. Les lire avant toute action :
+
+| Fichier | Contenu |
+|---------|---------|
+| `.claude/projects/-Users-erwann-Documents-GitHub-wind-sentinel/memory/project_overview.md` | Stack, architecture, fichiers clés, conventions techniques, auto-refresh |
+| `.claude/projects/-Users-erwann-Documents-GitHub-wind-sentinel/memory/feedback_conventions.md` | Conventions UI/UX validées (couleurs, flèches, tooltip, graphiques) |
+| `.claude/projects/-Users-erwann-Documents-GitHub-wind-sentinel/memory/user_profile.md` | Profil utilisateur et style de collaboration |
+
+## Règle de mise à jour
+
+**Après chaque modification significative**, mettre à jour le(s) fichier(s) concerné(s) :
+- Nouveau comportement validé → `feedback_conventions.md`
+- Changement d'architecture ou de convention technique → `project_overview.md`
+- Nouvelle préférence utilisateur observée → `user_profile.md`
+
+Ne pas attendre la fin de session — mettre à jour au fur et à mesure.
+
+---
+
 # CLAUDE.md — Wind-Sentinel
 
 ## Vue d'ensemble
