@@ -1,0 +1,8 @@
+fastapi>=0.110
+uvicorn[standard]
+httpx
+cachetools
+apscheduler
+pytest
+pytest-asyncio
+httpx
