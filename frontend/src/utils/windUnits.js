@@ -5,14 +5,14 @@ const BEAUFORT_SCALE = [
   [Infinity, 12],
 ]
 
+// Seuils en m/s convertis depuis nœuds : 8kt=4.12, 15kt=7.72, 25kt=12.86, 35kt=18.01, 45kt=23.15
 const WIND_COLOR_SCALE = [
-  [0, 1, '#E8F4F8'],
-  [1, 5, '#74C6E6'],
-  [5, 11, '#4CAF50'],
-  [11, 20, '#F5A623'],
-  [20, 29, '#E85D26'],
-  [29, 39, '#C0392B'],
-  [39, Infinity, '#7B1A1A'],
+  [0,     4.12,  '#93C5FD'],  // 0–8 kt    — calme, bleu azur pâle
+  [4.12,  7.72,  '#22C55E'],  // 8–15 kt   — vert
+  [7.72,  12.86, '#EAB308'],  // 15–25 kt  — jaune
+  [12.86, 18.01, '#F97316'],  // 25–35 kt  — orange
+  [18.01, 23.15, '#C2410C'],  // 35–45 kt  — orange foncé
+  [23.15, Infinity, '#7F1D1D'], // >45 kt  — rouge foncé
 ]
 
 export function msToKnots(ms) { return ms * 1.94384 }

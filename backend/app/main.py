@@ -26,8 +26,13 @@ app.include_router(grid.router, prefix="/api")
 app.include_router(forecast.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
 
+# Drapeau premier démarrage : évite un conflit de rate-limit avec l'instance précédente
+_grid_startup_run = True
+
 
 async def _refresh_cache():
+    global _grid_startup_run
+
     logger.info("Rafraîchissement du cache stations + grille...")
     try:
         data = await synop_service.fetch_stations()
@@ -40,6 +45,15 @@ async def _refresh_cache():
         logger.info(f"Stations mises à jour : {len(data)} stations")
     except Exception as e:
         logger.warning(f"Erreur refresh stations : {e}")
+
+    # Pause pour éviter le rate-limit Open-Meteo entre les deux fetches
+    await asyncio.sleep(15)
+
+    # Grille différée au 1er run (même raison que les stations modèle)
+    if _grid_startup_run:
+        _grid_startup_run = False
+        logger.info("Démarrage initial : grille différée au prochain cycle")
+        return
 
     try:
         grid_data = await openmeteo_service.fetch_grid_data()

@@ -8,26 +8,35 @@ import { useAutoRefresh } from './hooks/useAutoRefresh'
 
 export default function App() {
   const { stations, gridData, lastUpdate, loading, error, refetch } = useWindData()
-  const [unit, setUnit] = useState('knots')
+  const [unit, setUnit]                   = useState('knots')
   const [showAnimation, setShowAnimation] = useState(true)
   const [selectedStation, setSelectedStation] = useState(null)
+  const [showRealOnly, setShowRealOnly]   = useState(false)
 
   useAutoRefresh(refetch, 300_000)
+
+  const displayedStations = showRealOnly
+    ? stations.filter(s => s.source === 'synop')
+    : stations
 
   const currentStation = selectedStation
     ? (stations.find(s => s.id === selectedStation.id) ?? selectedStation)
     : null
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#1a1a2e' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#EDF4FF' }}>
+
+      {/* Erreur réseau */}
       {error && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[2000] bg-red-900/90 text-red-200 text-sm px-4 py-2 rounded-lg">
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[2000]
+                        bg-red-950/95 border border-red-800/60 text-red-300
+                        text-sm px-4 py-2 rounded-lg backdrop-blur-md shadow-panel">
           Erreur : {error}
         </div>
       )}
 
       <WindMap
-        stations={stations}
+        stations={displayedStations}
         gridData={gridData}
         unit={unit}
         showAnimation={showAnimation}
@@ -39,6 +48,8 @@ export default function App() {
         onUnitChange={setUnit}
         showAnimation={showAnimation}
         onToggleAnimation={() => setShowAnimation(v => !v)}
+        showRealOnly={showRealOnly}
+        onToggleRealOnly={() => setShowRealOnly(v => !v)}
         lastUpdate={lastUpdate}
         onRefresh={refetch}
         loading={loading}
@@ -55,8 +66,11 @@ export default function App() {
         />
       )}
 
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] text-gray-600 text-xs">
-        Wind Sentinel · Données Météo-France SYNOP + Open-Meteo AROME
+      {/* Footer */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]
+                      font-data text-text-muted text-[10px] tracking-wide tabular-nums
+                      select-none pointer-events-none">
+        Wind Sentinel · Météo-France SYNOP + Open-Meteo AROME
       </div>
     </div>
   )

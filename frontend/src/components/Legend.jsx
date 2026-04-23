@@ -1,14 +1,14 @@
+import { Wind } from 'lucide-react'
 import { convertSpeedValue, unitSuffix, msToBeaufort } from '../utils/windUnits'
 
-// Palettes définies en m/s (bornes internes)
+// Bornes en m/s alignées sur WIND_COLOR_SCALE (8kt=4.12, 15kt=7.72, 25kt=12.86, 35kt=18.01, 45kt=23.15)
 const LEGEND_BANDS = [
-  { label: 'Calme',           color: '#E8F4F8', minMs: 0,  maxMs: 1  },
-  { label: 'Brise légère',    color: '#74C6E6', minMs: 1,  maxMs: 5  },
-  { label: 'Brise modérée',   color: '#4CAF50', minMs: 5,  maxMs: 11 },
-  { label: 'Vent frais',      color: '#F5A623', minMs: 11, maxMs: 20 },
-  { label: 'Coup de vent',    color: '#E85D26', minMs: 20, maxMs: 29 },
-  { label: 'Tempête',         color: '#C0392B', minMs: 29, maxMs: 39 },
-  { label: 'Tempête violente',color: '#7B1A1A', minMs: 39, maxMs: null },
+  { label: 'Calme',        color: '#93C5FD', minMs: 0,     maxMs: 4.12  },
+  { label: 'Brise',        color: '#22C55E', minMs: 4.12,  maxMs: 7.72  },
+  { label: 'Vent modéré',  color: '#EAB308', minMs: 7.72,  maxMs: 12.86 },
+  { label: 'Vent fort',    color: '#F97316', minMs: 12.86, maxMs: 18.01 },
+  { label: 'Coup de vent', color: '#C2410C', minMs: 18.01, maxMs: 23.15 },
+  { label: 'Tempête',      color: '#7F1D1D', minMs: 23.15, maxMs: null  },
 ]
 
 function formatRange(minMs, maxMs, unit) {
@@ -26,15 +26,34 @@ function formatRange(minMs, maxMs, unit) {
 
 export default function Legend({ unit = 'knots' }) {
   return (
-    <div className="absolute bottom-8 left-4 z-[1000] bg-gray-900/90 backdrop-blur rounded-xl p-3 text-white text-xs shadow-lg">
-      <div className="font-semibold mb-2 text-gray-300">Vitesse du vent</div>
-      {LEGEND_BANDS.map(({ label, color, minMs, maxMs }) => (
-        <div key={label} className="flex items-center gap-2 mb-1">
-          <div className="w-4 h-4 rounded-sm flex-shrink-0" style={{ backgroundColor: color }} />
-          <span className="text-gray-200">{label}</span>
-          <span className="text-gray-500 ml-auto pl-3">{formatRange(minMs, maxMs, unit)}</span>
-        </div>
-      ))}
+    <div className="absolute bottom-8 left-4 z-[1000] panel p-3 text-text-primary text-xs min-w-[170px]">
+
+      {/* En-tête */}
+      <div className="flex items-center gap-1.5 mb-3 pb-2 border-b border-border-subtle">
+        <Wind size={11} className="text-text-muted" strokeWidth={2} />
+        <span className="text-text-secondary font-medium tracking-wide uppercase text-[10px]">
+          Vitesse du vent
+        </span>
+      </div>
+
+      {/* Bandes */}
+      <div className="space-y-1.5">
+        {LEGEND_BANDS.map(({ label, color, minMs, maxMs }) => (
+          <div key={label} className="flex items-center gap-2">
+            {/* Swatch */}
+            <div
+              className="w-3 h-3 rounded-sm flex-shrink-0 ring-1 ring-black/10"
+              style={{ backgroundColor: color }}
+            />
+            {/* Label */}
+            <span className="text-text-secondary flex-1">{label}</span>
+            {/* Valeur */}
+            <span className="font-data text-text-muted text-[10px] tabular-nums text-right">
+              {formatRange(minMs, maxMs, unit)}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

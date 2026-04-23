@@ -45,11 +45,11 @@ async def fetch_grid_data() -> list[dict[str, Any]]:
                 "models": OPEN_METEO_MODEL,
                 "wind_speed_unit": "ms",
             }
-            for attempt in range(3):
+            for attempt in range(5):
                 resp = await client.get(OPEN_METEO_BASE_URL, params=params)
                 if resp.status_code != 429:
                     break
-                await asyncio.sleep(5 * (attempt + 1))
+                await asyncio.sleep(8 * (attempt + 1))
             resp.raise_for_status()
             data = resp.json()
             if i + OPEN_METEO_BATCH_SIZE < len(points):
